@@ -17,7 +17,7 @@ if [[ -z "$TMP_VOLUME" || -z "$AUTHFILE" || -z "$CONTAINER_IMAGE_LIQUBASE" || -z
     echo "  TMP_VOLUME: $TMP_VOLUME"
     echo "  AUTHFILE: $AUTHFILE"
     echo "  CONTAINER_IMAGE_LIQUBASE: $CONTAINER_IMAGE_LIQUBASE"
-    echo "  GITHUB_RELEASE_TAG: $GITHUB_RELEASE_TAG"
+    echo "  GITHUB_TAG: $GITHUB_TAG"
     echo "  LIQUIBASE_FRAMEWORK_DIR: $LIQUIBASE_FRAMEWORK_DIR"
     echo "  DRY_RUN: $DRY_RUN"
     exit 1
@@ -42,26 +42,32 @@ else
     LIQUIBASE_CMD="update"
 fi
 
-# Set up core migration framework
+# Perform database migration for version
 liquibase --defaultsFile=liquibase.properties \
-    --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
-    --changelog-file=changelog.xml \
-    --contexts=setup,compile_schema ${LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
+    --contexts=pre_tag ${LIQUIBASE_CMD} -Dapp_version=${GITHUB_TAG}
 
-# Clear schema state for pre-version stage
-liquibase --defaultsFile=liquibase.properties \
-    --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
-    --changelog-file=changelog.xml \
-    --contexts=clear_schema_state ${LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
+# Tag database for version
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo "Skipping tag database for version (DRY_RUN=true)"
+else
+    liquibase --defaultsFile=liquibase.properties \
+        --contexts=tag ${LIQUIBASE_CMD} ${GITHUB_TAG}
+fi
 
-# Log schema state for pre-version stage
+# Recompile schema
 liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=changelog.xml \
-    --contexts=log_schema_state ${LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
+    --contexts=compile_schema ${LIQUIBASE_CMD}
 
-# Tag database before running migration
+# Clear schema state for post-version stage
 liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=changelog.xml \
-    --contexts=pre_tag ${LIQUIBASE_CMD} -Dmigration_tag=${GITHUB_TAG}
+    --contexts=clear_schema_state ${LIQUIBASE_CMD} -Dstage=post${GITHUB_TAG}
+
+# Log schema state for post-version stage
+liquibase --defaultsFile=liquibase.properties \
+    --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
+    --changelog-file=changelog.xml \
+    --contexts=log_schema_state ${LIQUIBASE_CMD} -Dstage=post${GITHUB_TAG}
