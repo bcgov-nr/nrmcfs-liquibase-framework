@@ -26,6 +26,9 @@ alias liquibase="podman run --rm \
     --authfile \"${TMP_VOLUME}/${AUTHFILE}\" \
     \"${CONTAINER_IMAGE_LIQUBASE}\""
 
+# Ensure the alias is available in the current shell
+shopt -s expand_aliases
+
 # Set up core migration framework
 liquibase --defaultsFile=liquibase.properties \
     status --verbose
