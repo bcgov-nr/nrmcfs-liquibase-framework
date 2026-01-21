@@ -8,7 +8,6 @@ AUTHFILE="${AUTHFILE}"
 CONTAINER_IMAGE_LIQUBASE="${CONTAINER_IMAGE_LIQUBASE}"
 GITHUB_TAG="${GITHUB_TAG#v}"
 LIQUIBASE_FRAMEWORK_DIR="${LIQUIBASE_FRAMEWORK_DIR}"
-DRY_RUN="${DRY_RUN:-false}"
 
 # Validate that all required variables are set
 if [[ -z "$TMP_VOLUME" || -z "$AUTHFILE" || -z "$CONTAINER_IMAGE_LIQUBASE" || -z "$GITHUB_TAG" || -z "$LIQUIBASE_FRAMEWORK_DIR" ]]; then
@@ -17,9 +16,8 @@ if [[ -z "$TMP_VOLUME" || -z "$AUTHFILE" || -z "$CONTAINER_IMAGE_LIQUBASE" || -z
     echo "  TMP_VOLUME: $TMP_VOLUME"
     echo "  AUTHFILE: $AUTHFILE"
     echo "  CONTAINER_IMAGE_LIQUBASE: $CONTAINER_IMAGE_LIQUBASE"
-    echo "  GITHUB_RELEASE_TAG: $GITHUB_RELEASE_TAG"
+    echo "  GITHUB_TAG: $GITHUB_TAG"
     echo "  LIQUIBASE_FRAMEWORK_DIR: $LIQUIBASE_FRAMEWORK_DIR"
-    echo "  DRY_RUN: $DRY_RUN"
     exit 1
 fi
 
@@ -35,33 +33,55 @@ alias liquibase="podman run --rm \
 # Ensure the alias is available in the current shell
 shopt -s expand_aliases
 
-# Determine the liquibase command based on DRY_RUN
-if [[ "$DRY_RUN" == "true" ]]; then
-    LIQUIBASE_CMD="update-sql"
-else
-    LIQUIBASE_CMD="update"
-fi
-
+# Start pre-migration
 # Set up core migration framework
 liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=changelog.xml \
-    --contexts=setup,compile_schema ${LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
+    --contexts=setup,compile_schema update-sql -Dstage=pre${GITHUB_TAG}
 
 # Clear schema state for pre-version stage
 liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=changelog.xml \
-    --contexts=clear_schema_state ${LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
+    --contexts=clear_schema_state update-sql -Dstage=pre${GITHUB_TAG}
 
 # Log schema state for pre-version stage
 liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=changelog.xml \
-    --contexts=log_schema_state ${LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
+    --contexts=log_schema_state update-sql -Dstage=pre${GITHUB_TAG}
 
 # Tag database before running migration
 liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=changelog.xml \
-    --contexts=pre_tag ${LIQUIBASE_CMD} -Dmigration_tag=${GITHUB_TAG}
+    --contexts=pre_tag update-sql -Dmigration_tag=${GITHUB_TAG}
+# End pre-migration
+
+# Start migration
+# Perform database migration for version
+liquibase --defaultsFile=liquibase.properties \
+    --contexts=pre_tag update-sql -Dapp_version=${GITHUB_TAG}
+
+# Tag database for version
+echo "Skipping tag database for version"
+
+# Recompile schema
+liquibase --defaultsFile=liquibase.properties \
+    --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
+    --changelog-file=changelog.xml \
+    --contexts=compile_schema update-sql
+
+# Clear schema state for post-version stage
+liquibase --defaultsFile=liquibase.properties \
+    --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
+    --changelog-file=changelog.xml \
+    --contexts=clear_schema_state update-sql -Dstage=post${GITHUB_TAG}
+
+# Log schema state for post-version stage
+liquibase --defaultsFile=liquibase.properties \
+    --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
+    --changelog-file=changelog.xml \
+    --contexts=log_schema_state update-sql -Dstage=post${GITHUB_TAG}
+# End migration
