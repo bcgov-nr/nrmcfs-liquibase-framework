@@ -43,31 +43,5 @@ else
 fi
 
 # Perform database migration for version
-liquibase --defaultsFile=liquibase.properties \
-    --contexts=pre_tag ${LIQUIBASE_CMD} -Dapp_version=${GITHUB_TAG}
-
-# Tag database for version
-if [[ "$DRY_RUN" == "true" ]]; then
-    echo "Skipping tag database for version (DRY_RUN=true)"
-else
-    liquibase --defaultsFile=liquibase.properties \
-        --contexts=tag ${LIQUIBASE_CMD} ${GITHUB_TAG}
-fi
-
-# Recompile schema
-liquibase --defaultsFile=liquibase.properties \
-    --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
-    --changelog-file=changelog.xml \
-    --contexts=compile_schema ${LIQUIBASE_CMD}
-
-# Clear schema state for post-version stage
-liquibase --defaultsFile=liquibase.properties \
-    --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
-    --changelog-file=changelog.xml \
-    --contexts=clear_schema_state ${LIQUIBASE_CMD} -Dstage=post${GITHUB_TAG}
-
-# Log schema state for post-version stage
-liquibase --defaultsFile=liquibase.properties \
-    --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
-    --changelog-file=changelog.xml \
-    --contexts=log_schema_state ${LIQUIBASE_CMD} -Dstage=post${GITHUB_TAG}
+liquibase --defaultsFile=liquibase.properties
+    ${LIQUIBASE_CMD} -Dapp_version=${GITHUB_TAG}
