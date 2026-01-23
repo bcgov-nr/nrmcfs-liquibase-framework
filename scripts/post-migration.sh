@@ -47,7 +47,7 @@ if [[ "$DRY_RUN" == "true" ]]; then
     echo "Skipping tag database for version (DRY_RUN=true)"
 else
     liquibase --defaultsFile=liquibase.properties \
-        --contexts=tag ${LIQUIBASE_CMD} ${GITHUB_TAG}
+        tag ${GITHUB_TAG}
 fi
 
 # Recompile schema
