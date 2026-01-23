@@ -43,5 +43,5 @@ else
 fi
 
 # Perform database migration for version
-liquibase --defaultsFile=liquibase.properties
+liquibase --defaultsFile=liquibase.properties \
     ${LIQUIBASE_CMD} -Dapp_version=${GITHUB_TAG}
