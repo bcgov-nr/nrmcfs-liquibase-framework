@@ -47,6 +47,7 @@ if [[ "$DRY_RUN" == "true" ]]; then
     echo "Skipping tag database for version (DRY_RUN=true)"
 else
     liquibase --defaultsFile=liquibase.properties \
+        --log-level=WARNING \
         tag ${GITHUB_TAG}
 fi
 
@@ -54,16 +55,19 @@ fi
 liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=nrdk.xml \
+    --log-level=WARNING \
     --contexts=compile_schema ${LIQUIBASE_CMD}
 
 # Clear schema state for post-version stage
 liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=nrdk.xml \
+    --log-level=WARNING \
     --contexts=clear_schema_state ${LIQUIBASE_CMD} -Dstage=post${GITHUB_TAG}
 
 # Log schema state for post-version stage
 liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=nrdk.xml \
+    --log-level=WARNING \
     --contexts=log_schema_state ${LIQUIBASE_CMD} -Dstage=post${GITHUB_TAG}
