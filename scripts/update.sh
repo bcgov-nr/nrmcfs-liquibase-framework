@@ -44,5 +44,4 @@ fi
 
 # Perform database migration for version
 liquibase --defaultsFile=liquibase.properties \
-    --log-level=WARNING \
     ${LIQUIBASE_CMD} -Dapp_version=${GITHUB_TAG}
