@@ -9,14 +9,30 @@
     <!-- Properties file to include from application migration directory -->
     <property file="deployment.properties"/>
 
-    <changeSet  author="qed"  id="iitd_support_setup" runAlways="true" runOnChange="true" failOnError="false" context="setup" dbms="oracle">
+    <changeSet  author="itcg"  id="iitd_support_setup-vt" runAlways="false" runOnChange="true" failOnError="true" context="setup" dbms="oracle">
+        <preConditions onFail="MARK_RAN" onError="HALT" >
+            <sqlCheck expectedResult="0">
+               select count(*) from user_tables where table_name in ('NRDK_TMP_VALIDATION');
+            </sqlCheck>
+        </preConditions>
         <sqlFile  dbms="oracle"
                   encoding="UTF-8"
                   endDelimiter="\n@"
                   path="sql/v2021.11.01.1751.1__create_validation_table.sql"
                   relativeToChangelogFile="true"
                   splitStatements="true"
-                  stripComments="true"/>
+                  stripComments="false"/>
+        <rollback>
+            drop table nrdk_tmp_validation purge
+        </rollback>
+    </changeSet>
+
+    <changeSet  author="itcg"  id="iitd_support_setup-ts" runAlways="false" runOnChange="true" failOnError="true" context="setup" dbms="oracle">
+        <preConditions onFail="MARK_RAN" onError="HALT" >
+            <sqlCheck expectedResult="0">
+                select count(*) from user_tables where table_name in ('NRDK_TMP_SOURCE');
+            </sqlCheck>
+        </preConditions>
         <sqlFile  dbms="oracle"
                   encoding="UTF-8"
                   splitStatements="true"
@@ -24,6 +40,9 @@
                   path="sql/v2021.11.01.1752.1__create_source_backup_table.sql"
                   relativeToChangelogFile="true"
                   stripComments="true"/>
+        <rollback>
+            drop table nrdk_tmp_source purge
+        </rollback>
     </changeSet>
 
     <changeSet  author="qed"  id="iitd_support_pkg_spec" runAlways="true" runOnChange="true" failOnError="false" context="setup">
@@ -34,6 +53,9 @@
                   path="sql/v2021.11.01.1754.1__create_iitd_lb_support_pkg.sql"
                   relativeToChangelogFile="true"
                   stripComments="false"/>
+        <rollback>
+            drop package iitd_lb_support_pkg
+        </rollback>
     </changeSet>
 
     <changeSet  author="qed"  id="iitd_support_pkg_body" runAlways="true" runOnChange="true" failOnError="false" context="setup">
@@ -47,9 +69,12 @@
                   path="sql/v2021.11.01.1755.1__create_iitd_lb_support_pkg_body.sql"
                   relativeToChangelogFile="true"
                   stripComments="false"/>
+        <rollback>
+            drop package body iitd_lb_support_pkg
+        </rollback>
     </changeSet>
 
-    <changeSet  author="qed"  id="iitd_legacy_support_pkg_body" runAlways="true" runOnChange="true" failOnError="false" context="setup">
+    <changeSet  author="qed"  id="iitd_legacy_support_pkg_body" runAlways="false" runOnChange="true" failOnError="true" context="setup">
         <preConditions onFail="CONTINUE" onError="HALT">
             <sqlCheck expectedResult="LEGACY">select decode(min(regexp_replace(regexp_replace(banner,'\..*',''),'.* ','')),'11','LEGACY','STANDARD') from v$version</sqlCheck>
         </preConditions>
@@ -60,6 +85,9 @@
                   path="sql/v2021.11.01.1755.1__create_iitd_legacy_lb_support_pkg_body.sql"
                   relativeToChangelogFile="true"
                   stripComments="false"/>
+        <rollback>
+            drop package body iitd_lb_support_pkg
+        </rollback>
     </changeSet>
 
     <changeSet  author="qed"  id="log_schema_state_${stage}" runAlways="true" runOnChange="true" failOnError="true" context="log_schema_state" dbms="oracle">
