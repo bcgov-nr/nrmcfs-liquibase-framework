@@ -48,6 +48,7 @@ liquibase --defaultsFile=liquibase.properties \
     --changelog-file=nrdk.xml \
     --log-level=WARNING \
     --contexts=setup,compile_schema ${LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
+echo Exit: $?
 
 # Clear schema state for pre-version stage
 liquibase --defaultsFile=liquibase.properties \
@@ -55,6 +56,7 @@ liquibase --defaultsFile=liquibase.properties \
     --changelog-file=nrdk.xml \
     --log-level=WARNING \
     --contexts=clear_schema_state ${LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
+echo Exit: $?
 
 # Log schema state for pre-version stage
 liquibase --defaultsFile=liquibase.properties \
@@ -62,6 +64,7 @@ liquibase --defaultsFile=liquibase.properties \
     --changelog-file=nrdk.xml \
     --log-level=WARNING \
     --contexts=log_schema_state ${LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
+echo Exit: $?
 
 # Tag database before running migration
 liquibase --defaultsFile=liquibase.properties \
@@ -69,3 +72,4 @@ liquibase --defaultsFile=liquibase.properties \
     --changelog-file=nrdk.xml \
     --log-level=WARNING \
     --contexts=pre_tag ${LIQUIBASE_CMD} -Dmigration_tag=${GITHUB_TAG}
+echo Exit: $?
