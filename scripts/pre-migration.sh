@@ -55,6 +55,7 @@ liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=nrdk.xml \
     --log-level=WARNING \
+    --show-banner false \
     --contexts=clear_schema_state ${LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
 echo Exit: $?
 
@@ -63,6 +64,7 @@ liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=nrdk.xml \
     --log-level=WARNING \
+    --show-banner false \
     --contexts=log_schema_state ${LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
 echo Exit: $?
 
@@ -71,5 +73,6 @@ liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=nrdk.xml \
     --log-level=WARNING \
+    --show-banner false \
     --contexts=pre_tag ${LIQUIBASE_CMD} -Dmigration_tag=${GITHUB_TAG}
 echo Exit: $?

@@ -56,6 +56,7 @@ liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=nrdk.xml \
     --log-level=WARNING \
+    --show-banner false \
     --contexts=compile_schema ${LIQUIBASE_CMD}
 
 # Clear schema state for post-version stage
@@ -63,6 +64,7 @@ liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=nrdk.xml \
     --log-level=WARNING \
+    --show-banner false \
     --contexts=clear_schema_state ${LIQUIBASE_CMD} -Dstage=post${GITHUB_TAG}
 
 # Log schema state for post-version stage
@@ -70,4 +72,5 @@ liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=nrdk.xml \
     --log-level=WARNING \
+    --show-banner false \
     --contexts=log_schema_state ${LIQUIBASE_CMD} -Dstage=post${GITHUB_TAG}
