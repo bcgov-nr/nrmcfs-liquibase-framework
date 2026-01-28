@@ -9,6 +9,7 @@ CONTAINER_IMAGE_LIQUBASE="${CONTAINER_IMAGE_LIQUBASE}"
 GITHUB_TAG="${GITHUB_TAG#v}"
 LIQUIBASE_FRAMEWORK_DIR="${LIQUIBASE_FRAMEWORK_DIR}"
 DRY_RUN="${DRY_RUN:-false}"
+LB_LOG_LEVEL="${LIQUIBASEFRAMEWORKLOGLEVEL}"
 
 # Validate that all required variables are set
 if [[ -z "$TMP_VOLUME" || -z "$AUTHFILE" || -z "$CONTAINER_IMAGE_LIQUBASE" || -z "$GITHUB_TAG" || -z "$LIQUIBASE_FRAMEWORK_DIR" ]]; then
@@ -47,7 +48,7 @@ if [[ "$DRY_RUN" == "true" ]]; then
     echo "Skipping tag database for version (DRY_RUN=true)"
 else
     liquibase --defaultsFile=liquibase.properties \
-        --log-level=WARNING \
+        --log-level=${LB_LOG_LEVEL} \
         tag ${GITHUB_TAG}
 fi
 
@@ -55,7 +56,7 @@ fi
 liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=nrdk.xml \
-    --log-level=WARNING \
+    --log-level=${LB_LOG_LEVEL} \
     --show-banner false \
     --contexts=compile_schema ${LIQUIBASE_CMD}
 
@@ -63,7 +64,7 @@ liquibase --defaultsFile=liquibase.properties \
 liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=nrdk.xml \
-    --log-level=WARNING \
+    --log-level=${LB_LOG_LEVEL} \
     --show-banner false \
     --contexts=clear_schema_state ${LIQUIBASE_CMD} -Dstage=post${GITHUB_TAG}
 
@@ -71,6 +72,6 @@ liquibase --defaultsFile=liquibase.properties \
 liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=nrdk.xml \
-    --log-level=WARNING \
+    --log-level=${LB_LOG_LEVEL} \
     --show-banner false \
     --contexts=log_schema_state ${LIQUIBASE_CMD} -Dstage=post${GITHUB_TAG}
