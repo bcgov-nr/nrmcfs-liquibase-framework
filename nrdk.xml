@@ -45,7 +45,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet  author="qed"  id="iitd_support_pkg_spec" runAlways="true" runOnChange="true" failOnError="false" context="setup">
+    <changeSet  author="qed"  id="iitd_support_pkg_spec" runAlways="true" runOnChange="true" failOnError="true" context="setup">
         <sqlFile  dbms="oracle"
                   encoding="UTF-8"
                   splitStatements="true"
@@ -58,9 +58,11 @@
         </rollback>
     </changeSet>
 
-    <changeSet  author="qed"  id="iitd_support_pkg_body" runAlways="true" runOnChange="true" failOnError="false" context="setup">
+    <changeSet  author="qed"  id="iitd_support_pkg_body" runAlways="true" runOnChange="true" failOnError="true" context="setup">
         <preConditions onFail="WARN" onError="HALT" onFailMessage="Oracle version is 11 or earlier. Using legacy package body">
-            <sqlCheck expectedResult="STANDARD">select decode(min(regexp_replace(regexp_replace(banner,'\..*',''),'.* ','')),'11','LEGACY','STANDARD') from v$version</sqlCheck>
+            <sqlCheck expectedResult="STANDARD">
+               select decode(min(regexp_replace(regexp_replace(banner,'\..*',''),'.* ','')),'11','LEGACY','STANDARD') from v$version
+            </sqlCheck>
         </preConditions>
         <sqlFile  dbms="oracle"
                   encoding="UTF-8"
@@ -76,7 +78,9 @@
 
     <changeSet  author="qed"  id="iitd_legacy_support_pkg_body" runAlways="false" runOnChange="true" failOnError="true" context="setup">
         <preConditions onFail="CONTINUE" onError="HALT">
-            <sqlCheck expectedResult="LEGACY">select decode(min(regexp_replace(regexp_replace(banner,'\..*',''),'.* ','')),'11','LEGACY','STANDARD') from v$version</sqlCheck>
+            <sqlCheck expectedResult="LEGACY">
+               select decode(min(regexp_replace(regexp_replace(banner,'\..*',''),'.* ','')),'11','LEGACY','STANDARD') from v$version
+            </sqlCheck>
         </preConditions>
         <sqlFile  dbms="oracle"
                   encoding="UTF-8"
@@ -91,15 +95,13 @@
     </changeSet>
 
     <changeSet  author="qed"  id="log_schema_state_${stage}" runAlways="true" runOnChange="true" failOnError="true" context="log_schema_state" dbms="oracle">
-        <sql
-            dbms="oracle">
+        <sql dbms="oracle">
             call iitd_lb_support_pkg.log_schema_state('${stage}')
         </sql>
     </changeSet>
 
-    <changeSet  author="qed"  id="clear_schema_state_${stage}" runAlways="true" runOnChange="true" failOnError="false" context="clear_schema_state" dbms="oracle">
-        <sql
-                dbms="oracle">
+    <changeSet  author="qed"  id="clear_schema_state_${stage}" runAlways="true" runOnChange="true" failOnError="true" context="clear_schema_state" dbms="oracle">
+        <sql dbms="oracle">
             call iitd_lb_support_pkg.clear_schema_state('${stage}')
         </sql>
     </changeSet>
@@ -164,10 +166,13 @@
 
     <changeSet  author="qed"  id="compile_invalid_objects" runAlways="true" runOnChange="true" context="compile_schema" dbms="oracle">
         <preConditions onFail="MARK_RAN">
-            <sqlCheck expectedResult="SHOULD_RUN">select decode(count(*), 0, 'DONT_RUN','SHOULD_RUN') from user_objects where status = 'INVALID'</sqlCheck>
+            <sqlCheck expectedResult="SHOULD_RUN">
+               select decode(count(*), 0, 'DONT_RUN','SHOULD_RUN') from user_objects where status = 'INVALID'
+            </sqlCheck>
         </preConditions>
-        <sql
-                dbms="oracle"> call iitd_lb_support_pkg.compile_objects('${compile_exclusion_csv}')</sql>
+        <sql dbms="oracle">
+            call iitd_lb_support_pkg.compile_objects('${compile_exclusion_csv}')
+        </sql>
         <rollback/>
     </changeSet>
 </databaseChangeLog>
