@@ -4,12 +4,16 @@ param=$1
 
 case "$param" in
   "--run-update")
-    DRY_LB_CMD=update-sql;
-    LIQUIBASE_CMD=update;
+    APP_DRY_LB_CMD=update-sql;
+    APP_LIQUIBASE_CMD=update;
+    NRDK_DRY_LB_CMD=update-sql;
+    NRDK_LIQUIBASE_CMD=update;
     ;;
   "--run-rollback")
-    DRY_LB_CMD=rollback-sql;
+    APP_DRY_LB_CMD=rollback-sql;
     LIQUIBASE_CMD=rollback;
+    NRDK_DRY_LB_CMD=update-sql;
+    NRDK_LIQUIBASE_CMD=update;
     ;;
   *)
     echo "Invalid parameter: $param"
@@ -54,7 +58,8 @@ shopt -s expand_aliases
 
 # Determine the liquibase command based on DRY_RUN
 if [[ "$DRY_RUN" == "true" ]]; then
-    LIQUIBASE_CMD=$DRY_LB_CMD
+    APP_LIQUIBASE_CMD=$APP_DRY_LB_CMD
+    NRDK_LIQUIBASE_CMD=$NRDK_DRY_LB_CMD
 fi
 
 # Get status
@@ -68,7 +73,7 @@ liquibase --defaultsFile=liquibase.properties \
     --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
     --changelog-file=nrdk.xml \
     --log-level=${LB_LOG_LEVEL} \
-    --contexts=setup,compile_schema ${LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
+    --contexts=setup,compile_schema ${NRDK_LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
 echo Exit: $?
 
 # Clear schema state for pre-version stage
@@ -77,7 +82,7 @@ liquibase --defaultsFile=liquibase.properties \
     --changelog-file=nrdk.xml \
     --log-level=${LB_LOG_LEVEL} \
     --show-banner false \
-    --contexts=clear_schema_state ${LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
+    --contexts=clear_schema_state ${NRDK_LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
 echo Exit: $?
 
 # Log schema state for pre-version stage
@@ -86,23 +91,27 @@ liquibase --defaultsFile=liquibase.properties \
     --changelog-file=nrdk.xml \
     --log-level=${LB_LOG_LEVEL} \
     --show-banner false \
-    --contexts=log_schema_state ${LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
+    --contexts=log_schema_state ${NRDK_LIQUIBASE_CMD} -Dstage=pre${GITHUB_TAG}
 echo Exit: $?
 
 # Tag database before running migration
-liquibase --defaultsFile=liquibase.properties \
-    --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
-    --changelog-file=nrdk.xml \
-    --log-level=${LB_LOG_LEVEL} \
-    --show-banner false \
-    --contexts=pre_tag ${LIQUIBASE_CMD} -Dmigration_tag=${GITHUB_TAG}
-echo Exit: $?
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo "Skipping pre_tag database for version (DRY_RUN=true)"
+else
+  liquibase --defaultsFile=liquibase.properties \
+      --search-path=${PODMAN_WORKDIR}/${LIQUIBASE_FRAMEWORK_DIR} \
+      --changelog-file=nrdk.xml \
+      --log-level=${LB_LOG_LEVEL} \
+      --show-banner false \
+      --contexts=pre_tag ${NRDK_LIQUIBASE_CMD} -Dmigration_tag=${GITHUB_TAG}
+  echo Exit: $?
+fi
 
 ##### update or rollback ###############################################################################################
 
 # Perform database migration for version
 liquibase --defaultsFile=liquibase.properties \
-    ${LIQUIBASE_CMD} -Dapp_version=${GITHUB_TAG}
+    ${APP_LIQUIBASE_CMD} -Dapp_version=${GITHUB_TAG}
 echo Exit: $?
 
 ##### post-migration ###################################################################################################
@@ -123,7 +132,7 @@ liquibase --defaultsFile=liquibase.properties \
     --changelog-file=nrdk.xml \
     --log-level=${LB_LOG_LEVEL} \
     --show-banner false \
-    --contexts=compile_schema ${LIQUIBASE_CMD}
+    --contexts=compile_schema ${NRDK_LIQUIBASE_CMD}
 echo Exit: $?
 
 # Clear schema state for post-version stage
@@ -132,7 +141,7 @@ liquibase --defaultsFile=liquibase.properties \
     --changelog-file=nrdk.xml \
     --log-level=${LB_LOG_LEVEL} \
     --show-banner false \
-    --contexts=clear_schema_state ${LIQUIBASE_CMD} -Dstage=post${GITHUB_TAG}
+    --contexts=clear_schema_state ${NRDK_LIQUIBASE_CMD} -Dstage=post${GITHUB_TAG}
 echo Exit: $?
 
 # Log schema state for post-version stage
@@ -141,5 +150,5 @@ liquibase --defaultsFile=liquibase.properties \
     --changelog-file=nrdk.xml \
     --log-level=${LB_LOG_LEVEL} \
     --show-banner false \
-    --contexts=log_schema_state ${LIQUIBASE_CMD} -Dstage=post${GITHUB_TAG}
+    --contexts=log_schema_state ${NRDK_LIQUIBASE_CMD} -Dstage=post${GITHUB_TAG}
 echo Exit: $?
