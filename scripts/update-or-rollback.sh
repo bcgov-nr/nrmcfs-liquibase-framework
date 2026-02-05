@@ -11,7 +11,7 @@ case "$param" in
     ;;
   "--run-rollback")
     APP_DRY_LB_CMD=rollback-sql;
-    LIQUIBASE_CMD=rollback;
+    APP_LIQUIBASE_CMD=rollback;
     NRDK_DRY_LB_CMD=update-sql;
     NRDK_LIQUIBASE_CMD=update;
     ;;
