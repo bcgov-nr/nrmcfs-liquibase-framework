@@ -4,12 +4,14 @@ param=$1
 
 case "$param" in
   "--run-update")
+    LB_MODE=update;
     APP_DRY_LB_CMD=update-sql;
     APP_LIQUIBASE_CMD=update;
     NRDK_DRY_LB_CMD=update-sql;
     NRDK_LIQUIBASE_CMD=update;
     ;;
   "--run-rollback")
+    LB_MODE=rollback;
     APP_DRY_LB_CMD=rollback-sql;
     APP_LIQUIBASE_CMD=rollback;
     NRDK_DRY_LB_CMD=update-sql;
@@ -106,8 +108,12 @@ fi
 ##### update or rollback ###############################################################################################
 
 # Perform database migration for version
+if [[ "$LB_MODE" == "rollback" ]]; then
+  $LB_TAG="--tag=pre\${GITHUB_TAG}"
+fi
+
 liquibase --defaultsFile=liquibase.properties \
-    ${APP_LIQUIBASE_CMD} -Dapp_version=${GITHUB_TAG}
+    ${APP_LIQUIBASE_CMD} ${LB_TAG} -Dapp_version=${GITHUB_TAG}
 echo Exit: $?
 
 ##### post-migration ###################################################################################################
