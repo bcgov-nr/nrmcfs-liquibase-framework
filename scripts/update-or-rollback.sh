@@ -109,7 +109,7 @@ fi
 
 # Perform database migration for version
 if [[ "$LB_MODE" == "rollback" ]]; then
-  $LB_TAG="--tag=pre\${GITHUB_TAG}"
+    LB_TAG="--tag=pre${GITHUB_TAG}"
 fi
 
 liquibase --defaultsFile=liquibase.properties \
