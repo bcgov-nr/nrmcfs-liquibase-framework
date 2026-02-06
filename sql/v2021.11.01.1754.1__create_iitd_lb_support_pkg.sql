@@ -1,5 +1,4 @@
---liquibase formatted sql
---changeset qed:iitd_support_pkg stripComments:false splitStatements:true endDelimiter:/
+
 create or replace package iitd_lb_support_pkg as
     e_uncompiled_objects EXCEPTION;
     PRAGMA exception_init (e_uncompiled_objects, -20001);

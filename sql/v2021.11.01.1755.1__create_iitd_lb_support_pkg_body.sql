@@ -1,7 +1,3 @@
---liquibase formatted sql
---changeset qed:iitd_support_pkg_body stripComments:false splitStatements:true endDelimiter:/
---preconditions onFail:WARN onError:HALT onFailMessage:"Running against Oracle RDBMS <= 11"
---precondition-sql-check expectedResult:STANDARD select decode(min(regexp_replace(regexp_replace(banner,'\..*',''),'.* ','')),'11','LEGACY','STANDARD') from v$version/
 create or replace package body iitd_lb_support_pkg as
     -- STANDARD version
     FUNCTION CSV_TO_TABLE(str varchar2) return VARCHAR2_TABLE PIPELINED is
@@ -280,5 +276,3 @@ create or replace package body iitd_lb_support_pkg as
 
 end iitd_lb_support_pkg;
 /
---rollback drop package iitd_lb_support_pkg
---rollback /
