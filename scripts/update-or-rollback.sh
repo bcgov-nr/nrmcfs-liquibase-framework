@@ -62,10 +62,6 @@ if [[ "$DRY_RUN" == "true" ]]; then
     NRDK_LIQUIBASE_CMD=$NRDK_DRY_LB_CMD
 fi
 
-# Get status
-liquibase --defaultsFile=liquibase.properties \
-    status --verbose -Dapp_version=${GITHUB_TAG}
-
 ##### pre-migration ####################################################################################################
 
 # Set up core migration framework
